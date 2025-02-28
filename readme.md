@@ -75,69 +75,69 @@ Unfortunately, "building utilities" exist, but aren't terribly friendly. There i
 Warning: This requires some technical know-how (or just GPT it I guess) to get working.
 You will need to modify the Dockerfile to add the following things:
 
-ARG EMAIL
-ARG EMAIL_PASSWORD
-ARG MAIL_NAME
-ARG SMTP_DOMAIN
-ARG SMTP_PORT
+`ARG EMAIL`
+`ARG EMAIL_PASSWORD`
+`ARG MAIL_NAME`
+`ARG SMTP_DOMAIN`
+`ARG SMTP_PORT`
 ...
-RUN apt-get update && apt-get install -y postfix
+`RUN apt-get update && apt-get install -y postfix`
 ...
-COPY main.cf /etc/postfix/main.cf
-RUN dos2unix /etc/postfix/main.cf
+`COPY main.cf /etc/postfix/main.cf`
+`RUN dos2unix /etc/postfix/main.cf`
 ...
-RUN sh -c 'echo "root: ${EMAIL}" >> /etc/aliases' && \
-    sh -c 'echo "${MAIL_NAME}" >> /etc/mailname' && \
-    sh -c 'echo "[${SMTP_DOMAIN}]:${SMTP_PORT} ${MAIL_NAME}:${EMAIL_PASSWORD}" >> /etc/postfix/sasl_passwd' && \
-    postmap /etc/postfix/sasl_passwd && \
-    chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+`RUN sh -c 'echo "root: ${EMAIL}" >> /etc/aliases' && \`
+    `sh -c 'echo "${MAIL_NAME}" >> /etc/mailname' && \`
+    `sh -c 'echo "[${SMTP_DOMAIN}]:${SMTP_PORT} ${MAIL_NAME}:${EMAIL_PASSWORD}" >> /etc/postfix/sasl_passwd' && \`
+    `postmap /etc/postfix/sasl_passwd && \`
+    `chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db`
 ...
-RUN postconf -e "relayhost = [email-smtp.us-east-1.amazonaws.com]:587" \
-"smtp_sasl_auth_enable = yes" \
-"smtp_sasl_security_options = noanonymous" \
-"smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd" \
-"smtp_use_tls = yes" \
-"smtp_tls_security_level = secure" \
-"smtp_tls_note_starttls_offer = yes"
+`RUN postconf -e "relayhost = [email-smtp.us-east-1.amazonaws.com]:587" \`
+`"smtp_sasl_auth_enable = yes" \`
+`"smtp_sasl_security_options = noanonymous" \`
+`"smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd" \`
+`"smtp_use_tls = yes" \`
+`"smtp_tls_security_level = secure" \`
+`"smtp_tls_note_starttls_offer = yes"`
 ...
-RUN apt update && apt install --reinstall ca-certificates
+`RUN apt update && apt install --reinstall ca-certificates`
 
 Create a .env file in the same directory as your docker-compose and populate the ARG variables with valid things:
-EMAIL=<your to>@<your moo domain>.<com|net|etc>
-EMAIL_PASSWORD=mail pw
-PORT=25
-MAIL_NAME=mail username
-SMTP_DOMAIN=mail provider URL
-SMTP_PORT=587 or something
+`EMAIL=<your to>@<your moo domain>.<com|net|etc>`
+`EMAIL_PASSWORD=mail pw`
+`PORT=25`
+`MAIL_NAME=mail username`
+`SMTP_DOMAIN=mail provider URL`
+`SMTP_PORT=587 or something`
 
 In the root directory of this project, you will need a main.cf file, which is a standard postfix .cf file, it shouldn't need any fancy configuration
 Look online for resources or http://www.postfix.org/COMPATIBILITY_README.html.
 
 Then, once you have done all that work, you can run the following on the MOO server:
 Considering the following "script" to run in your MOO, this configures the sending of registration emails to users:
-;#72.site = "<your moo site domain>"
-;#72.postmaster = "<your to>@<your moo domain>.<com|net|etc>"
-;#72.port = <the port to your moo>
-;#72.MOO_name = <the name of your moo>
-;#72.usual_postmaster = <same as postmaster>
-;#72.password_postmaster = ""
-;#72.envelope_from = <same as postmaster>
-;"Alter the following ONLY if you use a non-standard website domain to host your moo"
-;#72.valid_host_regexp = "^%([-_a-z0-9]+%.%)+%(gov%|xyz%|edu%|com%|org%|int%|mil%|net%|%nato%|arpa%|[a-z][a-z]%)$" 
-@program #72:return_address_for   this none this
-  ":return_address_for(player) => string of 'return address'. Currently inbound mail doesn't work, so this is a bogus address.";
-  who = args[1];
-  if (valid(who) && is_player(who))
-    if (who.wizard)
-      return "<!hard wire your own EMAIL HERE FOR TESTING!> (Game Admin)";
-    endif
-    return tostr(toint(who), "@", this.site, " (", who.name, ")");
-  else
-    return tostr($login.registration_address, " (non-player ", who, ")");
-  endif
-.
+`;#72.site = "<your moo site domain>"`
+`;#72.postmaster = "<your to>@<your moo domain>.<com|net|etc>"`
+`;#72.port = <the port to your moo>`
+`;#72.MOO_name = <the name of your moo>`
+`;#72.usual_postmaster = <same as postmaster>`
+`;#72.password_postmaster = ""`
+`;#72.envelope_from = <same as postmaster>`
+`;"Alter the following ONLY if you use a non-standard website domain to host your moo"`
+`;#72.valid_host_regexp = "^%([-_a-z0-9]+%.%)+%(gov%|xyz%|edu%|com%|org%|int%|mil%|net%|%nato%|arpa%|[a-z][a-z]%)$" `
+`@program #72:return_address_for   this none this`
+`  ":return_address_for(player) => string of 'return address'. Currently inbound mail doesn't work, so this is a bogus address.";`
+`  who = args[1];`
+`  if (valid(who) && is_player(who))`
+`    if (who.wizard)`
+`      return "<!hard wire your own EMAIL HERE FOR TESTING!> (Game Admin)";`
+`    endif`
+`    return tostr(toint(who), "@", this.site, " (", who.name, ")");`
+`  else`
+`    return tostr($login.registration_address, " (non-player ", who, ")");`
+`  endif`
+`.
 
-;"Now do this to test!"
-;#72:sendmail("<email you want to test against>", "test", "test", "test")
+`;"Now do this to test!"`
+`;#72:sendmail("<email you want to test against>", "test", "test", "test")`
 
 You should successfully get an email. I was able to get mail registration working with AWS's simple mail provider (though it took a few hours of work, make sure you're using the correct region URL for the account you set up). But hopefully that helps people get started.
