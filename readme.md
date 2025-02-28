@@ -135,9 +135,10 @@ Considering the following "script" to run in your MOO, this configures the sendi
 `  else`  
 `    return tostr($login.registration_address, " (non-player ", who, ")");`  
 `  endif`  
-`.  
+`.`  
 
 `;"Now do this to test!"`  
 `;#72:sendmail("<email you want to test against>", "test", "test", "test")`  
 
 You should successfully get an email. I was able to get mail registration working with AWS's simple mail provider (though it took a few hours of work, make sure you're using the correct region URL for the account you set up). But hopefully that helps people get started.
+If the email does not arrive, you will need to install logging utils into the docker image and inspect `/var/logs/` for postfix, but you normally don't get helpful errors anyway, so just guess until it works!
